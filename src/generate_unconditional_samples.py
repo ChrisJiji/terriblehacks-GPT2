@@ -11,9 +11,9 @@ import model, sample, encoder
 def sample_model(
     model_name='117M',
     seed=None,
-    nsamples=0,
+    nsamples=1,
     batch_size=1,
-    length=None,
+    length=100,
     temperature=1,
     top_k=0,
     top_p=1,
@@ -74,6 +74,11 @@ def sample_model(
                 text = enc.decode(out[i])
                 print("=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40)
                 print(text)
+                return text
 
-if __name__ == '__main__':
-    fire.Fire(sample_model)
+def generate_post():
+    return sample_model(
+        length = 100,
+        temperature = 0.8,
+        top_k = 40
+    )
