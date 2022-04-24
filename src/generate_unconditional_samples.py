@@ -9,9 +9,9 @@ import tensorflow.compat.v1 as tf
 import model, sample, encoder
 
 def sample_model(
-    model_name='117M',
+    model_name='shitposter',
     seed=None,
-    nsamples=1,
+    nsamples=0,
     batch_size=1,
     length=100,
     temperature=1,
@@ -75,10 +75,11 @@ def sample_model(
                 print("=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40)
                 print(text)
                 return text
-
+                
 def generate_post():
     return sample_model(
         length = 100,
         temperature = 0.8,
+        nsamples = 1,
         top_k = 40
     )

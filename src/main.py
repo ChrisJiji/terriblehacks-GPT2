@@ -1,12 +1,15 @@
 from flask import Flask, jsonify
+from flask_cors import CORS, cross_origin
 from generate_unconditional_samples import generate_post
 
 app = Flask(__name__)
+CORS(app, support_credentials=True)
 
 TITLE_DELIMITER = "<|endoftitle|>"
 ENTRY_DELIMITER = "<|endoftext|>"
 
 @app.route("/generate", methods=['GET'])
+@cross_origin(supports_credentials=True)
 def generate():
   # call on the model to generate a sample, and return the result
   # we can separate the title and body here as well, before sending it to the client
