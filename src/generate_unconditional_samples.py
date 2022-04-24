@@ -13,7 +13,7 @@ def sample_model(
     seed=None,
     nsamples=0,
     batch_size=1,
-    length=100,
+    length=None,
     temperature=1,
     top_k=0,
     top_p=1,
@@ -76,9 +76,12 @@ def sample_model(
                 print(text)
                 return text
                 
+#if __name__ == '__main__':
+#    fire.Fire(sample_model)
+   
 def generate_post():
     return sample_model(
-        length = 100,
+        #length = 100,
         temperature = 0.8,
         nsamples = 1,
         top_k = 40

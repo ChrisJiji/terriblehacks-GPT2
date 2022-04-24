@@ -9,7 +9,7 @@ import tensorflow.compat.v1 as tf
 import model, sample, encoder
 
 def interact_model(
-    model_name='124M',
+    model_name='shitposter',
     seed=None,
     nsamples=1,
     batch_size=1,
