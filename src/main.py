@@ -4,7 +4,6 @@ from generate_unconditional_samples import generate_post
 from os.path import exists
 import os
 import json
-import time
 from threading import Thread
 
 app = Flask(__name__)
@@ -15,13 +14,15 @@ ENTRY_DELIMITER = "<|endoftext|>"
 POSTS_PATH = "saved_posts.json"
 LOCK_PATH = "lock"
 
+# idea is to keep a number of pre-generated posts, because it takes a while to
+# generate and it seems that multiple posts are generated at once.
 def refill_posts():
-  #create lockfile to prevent multiple threads
+  # create lockfile to make sure only one thread is generating posts at once
   if exists(LOCK_PATH):
     print("thread denied >:(")
     return
   
-  print("thread created")
+  print("refilling posts")
   
   file = open(LOCK_PATH, 'w+')
   file.close()
@@ -30,7 +31,6 @@ def refill_posts():
     file = open(POSTS_PATH, 'w+')
     file.write("[]")
     file.close()
-  print("generating more posts...")
   
   saved_posts = []
   with open(POSTS_PATH, "r") as f:
@@ -39,45 +39,56 @@ def refill_posts():
   if not saved_posts:
     saved_posts = []
   
-  while len(saved_posts) < 20:
-    raw_posts = generate_post()
-    raw_posts = raw_posts.split(ENTRY_DELIMITER)
-
-    for p in raw_posts:
-      p = p.split(TITLE_DELIMITER)
-      title = ""
-      body = ""
-      if len(p) > 1:
-        title = p[0]
-        body = "".join(p[1:])
-      else:
-        title = "idk"
-        body = "".join(p)
-      
-      while title and title[0] == "\n":
-        title = title[1:]
-      while body and body[0] == "\n":
-        body = body[1:]      
-      while title and title[-1] == "\n":
-        title = title[:-1]
-      while body and body[-1] == "\n":
-        body = body[:-1]
-
-      if not title and not body:
-        continue
-
-      saved_posts.append({
-        "title": title,
-        "body": body
-      })
-    
-    print("number of saved posts:", len(saved_posts))
+  changed = False
   
-  with open(POSTS_PATH, "w") as f:
-    json.dump(saved_posts, f)
+  # if we have less than 20 posts, generate more until we have 30 saved
+  if len(saved_posts) < 20:
+    print("generating more posts...")
+    changed = True
+    while len(saved_posts) < 30:
+      raw_posts = generate_post()
+      raw_posts = raw_posts.split(ENTRY_DELIMITER)
+
+      for p in raw_posts:
+        p = p.split(TITLE_DELIMITER)
+        title = ""
+        body = ""
+        if len(p) > 1:
+          title = p[0]
+          body = "".join(p[1:])
+        else:
+          title = "idk"
+          body = "".join(p)
+        
+        # remove unnecessary newlines
+        while title and title[0] == "\n":
+          title = title[1:]
+        while body and body[0] == "\n":
+          body = body[1:]      
+        while title and title[-1] == "\n":
+          title = title[:-1]
+        while body and body[-1] == "\n":
+          body = body[:-1]
+
+        # skip empty posts
+        if not title and not body:
+          continue
+
+        saved_posts.append({
+          "title": title,
+          "body": body
+        })
+      
+      print("number of saved posts:", len(saved_posts))
+  
+  # save the new set of generated posts
+  if changed:
+    with open(POSTS_PATH, "w") as f:
+      json.dump(saved_posts, f)
 
   os.remove(LOCK_PATH)
 
+# retrieve one post from our stash of pre-generated posts
 def get_post():
   saved_posts = []
   with open(POSTS_PATH, "r") as f:
@@ -97,7 +108,7 @@ def get_post():
   
   return post
 
-
+# 'generate' endpoint that gives one post to the client
 @app.route("/generate", methods=['GET'])
 @cross_origin(supports_credentials=True)
 def generate():
@@ -110,6 +121,7 @@ def generate():
   return jsonify(post)
   
 
+# no longer necessary, was just to get it started
 @app.route("/refillllllllllllllllllllllllllllllllll", methods=['GET'])
 @cross_origin(supports_credentials=True)
 def refillllllllllllllllllllllllllllllllll():
